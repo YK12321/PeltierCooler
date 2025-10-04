@@ -44,8 +44,8 @@ This project implements a **closed-loop PID temperature controller** for a direc
 | Function | GPIO Pin | Connection Details |
 |----------|----------|-------------------|
 | **DS18B20 Data** | GPIO4 | One-wire bus with 4.7 kΩ pull-up to 3.3V |
-| **Intake Fan PWM** | GPIO16 | Via N-channel MOSFET (e.g., IRLZ44N) |
-| **Exhaust Fan PWM** | GPIO17 | Via N-channel MOSFET (e.g., IRLZ44N) |
+| **Intake Fan PWM** | GPIO25 | Via N-channel MOSFET (e.g., IRLZ44N) |
+| **Exhaust Fan PWM** | GPIO26 | Via N-channel MOSFET (e.g., IRLZ44N) |
 | **Valve Servo PWM** | GPIO18 | Direct connection (5V servo) |
 
 > ⚠️ **Important**: Never connect fans or Peltier modules directly to ESP32 GPIO pins. Use appropriate drivers/relays rated for your components.
@@ -159,8 +159,8 @@ Update pin definitions in `main/TemperatureControlSystem.cpp`:
 
 ```cpp
 static constexpr gpio_num_t PIN_TEMP_SENSOR   = GPIO_NUM_4;
-static constexpr gpio_num_t PIN_FAN_INTAKE    = GPIO_NUM_16;
-static constexpr gpio_num_t PIN_FAN_EXHAUST   = GPIO_NUM_17;
+static constexpr gpio_num_t PIN_FAN_INTAKE    = GPIO_NUM_25;
+static constexpr gpio_num_t PIN_FAN_EXHAUST   = GPIO_NUM_26;
 static constexpr gpio_num_t PIN_SERVO_VALVE   = GPIO_NUM_18;
 ```
 

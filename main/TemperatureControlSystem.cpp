@@ -14,8 +14,8 @@ static const char* TAG = "TempControl";
 
 // Hardware pin assignments
 static constexpr gpio_num_t PIN_TEMP_SENSOR   = GPIO_NUM_4;
-static constexpr gpio_num_t PIN_FAN_INTAKE    = GPIO_NUM_16;
-static constexpr gpio_num_t PIN_FAN_EXHAUST   = GPIO_NUM_17;
+static constexpr gpio_num_t PIN_FAN_INTAKE    = GPIO_NUM_25;
+static constexpr gpio_num_t PIN_FAN_EXHAUST   = GPIO_NUM_26;
 static constexpr gpio_num_t PIN_SERVO_VALVE   = GPIO_NUM_18;
 
 // PWM configuration for fans
