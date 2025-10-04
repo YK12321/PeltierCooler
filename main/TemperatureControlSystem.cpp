@@ -39,7 +39,7 @@ static constexpr float PID_KP = 0.9f;
 static constexpr float PID_KI = 0.08f;
 static constexpr float PID_KD = 0.1f;
 
-TemperatureControlSystem::TemperatureControlSystem(float targetTemp, uint32_t controlPeriodMs)
+TemperatureControlSystem::TemperatureControlSystem(float targetTemp, uint32_t controlPeriodMs, float errorMargin)
     : m_tempSensor(PIN_TEMP_SENSOR)
     , m_intakeFan(PIN_FAN_INTAKE, LEDC_CHANNEL_0, FAN_PWM_TIMER, "Intake Fan")
     , m_exhaustFan(PIN_FAN_EXHAUST, LEDC_CHANNEL_1, FAN_PWM_TIMER, "Exhaust Fan")
@@ -49,6 +49,7 @@ TemperatureControlSystem::TemperatureControlSystem(float targetTemp, uint32_t co
     , m_pid(PID_KP, PID_KI, PID_KD)
     , m_targetTemp(targetTemp)
     , m_filteredTemp(targetTemp)
+    , m_errorMargin(errorMargin)
     , m_controlPeriodMs(controlPeriodMs)
 {
 }
@@ -131,24 +132,50 @@ void TemperatureControlSystem::update()
     // Calculate error (positive when temperature is above target)
     float error = m_filteredTemp - m_targetTemp;
     
-    // Compute PID control output
-    float dt = m_controlPeriodMs / 1000.0f;
-    float controlOutput = m_pid.compute(error, dt);
-    
-    // Clamp and normalize control output to [0, 1]
-    if (controlOutput < 0.0f) controlOutput = 0.0f;
-    if (controlOutput > 1.5f) controlOutput = 1.5f;
-    float normalized = controlOutput;
-    if (normalized > 1.0f) normalized = 1.0f;
-    
-    // Apply control output to actuators
-    applyControlOutput(normalized);
+    // Three-zone control strategy based on error margin
+    if (error > m_errorMargin) {
+        // TOO HOT: Emergency cooling mode
+        // Max fans + fully open valve
+        ESP_LOGW(TAG, "TOO HOT: T=%.2f°C > target+margin (%.2f°C)", m_filteredTemp, m_targetTemp + m_errorMargin);
+        m_intakeFan.setSpeed(FAN_MAX_DUTY);
+        m_exhaustFan.setSpeed(FAN_MAX_DUTY);
+        m_valveServo.setAngle(SERVO_MAX_ANGLE);
+        m_pid.reset(); // Reset PID when leaving normal zone
+        
+    } else if (error < -m_errorMargin) {
+        // TOO COLD: Reduce cooling
+        // Minimum fans + close valve to reduce airflow
+        ESP_LOGW(TAG, "TOO COLD: T=%.2f°C < target-margin (%.2f°C)", m_filteredTemp, m_targetTemp - m_errorMargin);
+        m_intakeFan.setSpeed(FAN_BASE_DUTY);
+        m_exhaustFan.setSpeed(FAN_BASE_DUTY);
+        m_valveServo.setAngle(SERVO_MIN_ANGLE); // Close valve
+        m_pid.reset(); // Reset PID when leaving normal zone
+        
+    } else {
+        // WITHIN MARGIN: Normal PID control with fans only
+        // Valve stays fully open, PID controls fan speed
+        float dt = m_controlPeriodMs / 1000.0f;
+        float controlOutput = m_pid.compute(error, dt);
+        
+        // Clamp and normalize control output to [0, 1]
+        if (controlOutput < 0.0f) controlOutput = 0.0f;
+        if (controlOutput > 1.5f) controlOutput = 1.5f;
+        float normalized = controlOutput;
+        if (normalized > 1.0f) normalized = 1.0f;
+        
+        // Map control output to fan speeds
+        float fanSpeed = FAN_BASE_DUTY + normalized * (FAN_MAX_DUTY - FAN_BASE_DUTY);
+        m_intakeFan.setSpeed(fanSpeed);
+        m_exhaustFan.setSpeed(fanSpeed);
+        m_valveServo.setAngle(SERVO_MAX_ANGLE); // Keep valve open
+    }
     
     // Log status
-    ESP_LOGI(TAG, "T=%.2f°C (raw %.2f°C), err=%.2f, intake=%.0f%%, exhaust=%.0f%%, valve=%.1f°",
+    ESP_LOGI(TAG, "T=%.2f°C (raw %.2f°C), err=%.2f, margin=±%.2f, intake=%.0f%%, exhaust=%.0f%%, valve=%.1f°",
              m_filteredTemp,
              rawTemp,
              error,
+             m_errorMargin,
              m_intakeFan.getSpeed() * 100.0f,
              m_exhaustFan.getSpeed() * 100.0f,
              m_valveServo.getAngle());
@@ -171,6 +198,17 @@ float TemperatureControlSystem::getCurrentTemperature() const
     return m_filteredTemp;
 }
 
+void TemperatureControlSystem::setErrorMargin(float margin)
+{
+    m_errorMargin = margin;
+    ESP_LOGI(TAG, "Error margin updated to ±%.2f °C", margin);
+}
+
+float TemperatureControlSystem::getErrorMargin() const
+{
+    return m_errorMargin;
+}
+
 void TemperatureControlSystem::activateFailSafe()
 {
     ESP_LOGW(TAG, "FAIL-SAFE MODE ACTIVATED");
@@ -186,6 +224,9 @@ float TemperatureControlSystem::applyExponentialFilter(float newValue, float old
 
 void TemperatureControlSystem::applyControlOutput(float controlOutput)
 {
+    // NOTE: This method is now deprecated in favor of zone-based control in update()
+    // Kept for backward compatibility if needed
+    
     // Map control output to fan speeds (baseline + proportional increase)
     float intakeSpeed = FAN_BASE_DUTY + controlOutput * (FAN_MAX_DUTY - FAN_BASE_DUTY);
     float exhaustSpeed = FAN_BASE_DUTY + controlOutput * (FAN_MAX_DUTY - FAN_BASE_DUTY);

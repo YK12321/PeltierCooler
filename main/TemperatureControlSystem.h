@@ -21,8 +21,9 @@ public:
      * @brief Construct the control system
      * @param targetTemp Target temperature in Celsius
      * @param controlPeriodMs Control loop period in milliseconds
+     * @param errorMargin Acceptable temperature deviation from target (°C)
      */
-    TemperatureControlSystem(float targetTemp, uint32_t controlPeriodMs);
+    TemperatureControlSystem(float targetTemp, uint32_t controlPeriodMs, float errorMargin = 0.5f);
 
     /**
      * @brief Initialize all hardware components
@@ -54,6 +55,18 @@ public:
     float getCurrentTemperature() const;
 
     /**
+     * @brief Set error margin (temperature tolerance)
+     * @param margin Acceptable deviation from target in Celsius
+     */
+    void setErrorMargin(float margin);
+
+    /**
+     * @brief Get error margin
+     * @return Error margin in Celsius
+     */
+    float getErrorMargin() const;
+
+    /**
      * @brief Enter fail-safe mode (max cooling)
      */
     void activateFailSafe();
@@ -71,11 +84,12 @@ private:
     // Control parameters
     float m_targetTemp;
     float m_filteredTemp;
+    float m_errorMargin;
     uint32_t m_controlPeriodMs;
     
     // Constants
     static constexpr float TEMP_FILTER_ALPHA = 0.25f;
-    static constexpr float FAN_BASE_DUTY = 0.2f;
+    static constexpr float FAN_BASE_DUTY = 0.0f;  // Minimum fan speed (0% = off)
     static constexpr float FAN_MAX_DUTY = 1.0f;
     
     // Helper methods

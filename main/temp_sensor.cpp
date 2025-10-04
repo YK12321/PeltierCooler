@@ -10,8 +10,9 @@
 
 static const char* TAG = "Main";
 
-// Control parameters
-static constexpr float TARGET_TEMPERATURE_C = 22.0f;
+// Default control parameters
+static constexpr float DEFAULT_TEMPERATURE_C = 22.0f;
+static constexpr float DEFAULT_ERROR_MARGIN_C = 0.5f;  // ±0.5°C margin
 static constexpr uint32_t CONTROL_PERIOD_MS = 1000;
 
 /**
@@ -32,15 +33,18 @@ static void control_task(void* param)
 extern "C" void app_main(void)
 {
     ESP_LOGI(TAG, "=== Peltier Cooler Control System ===");
+    ESP_LOGI(TAG, "Target Temperature: %.2f °C ± %.2f °C", DEFAULT_TEMPERATURE_C, DEFAULT_ERROR_MARGIN_C);
     
-    // Create the temperature control system
-    static TemperatureControlSystem controlSystem(TARGET_TEMPERATURE_C, CONTROL_PERIOD_MS);
+    // Create the temperature control system with default settings
+    static TemperatureControlSystem controlSystem(DEFAULT_TEMPERATURE_C, CONTROL_PERIOD_MS, DEFAULT_ERROR_MARGIN_C);
     
     // Initialize all hardware
     if (!controlSystem.begin()) {
         ESP_LOGE(TAG, "Failed to initialize control system");
         return;
     }
+    
+    ESP_LOGI(TAG, "System initialized successfully");
     
     // Create control task
     BaseType_t result = xTaskCreate(
