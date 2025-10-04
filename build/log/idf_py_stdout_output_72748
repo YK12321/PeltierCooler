@@ -1,0 +1,9 @@
+-- Found Git: C:/Users/thewi/.espressif/tools/idf-git/2.39.2/cmd/git.exe (found version "2.39.2.windows.1") 
+-- The C compiler identification is GNU 11.2.0
+-- The CXX compiler identification is GNU 11.2.0
+-- The ASM compiler identification is GNU
+-- Found assembler: C:/Users/thewi/.espressif/tools/xtensa-esp32-elf/esp-2022r1-11.2.0/xtensa-esp32-elf/bin/xtensa-esp32-elf-gcc.exe
+-- Detecting C compiler ABI info
+-- Configuring incomplete, errors occurred!
+See also "C:/Users/thewi/Programming/ESP32/PeltierCooler/PeltierCoolerProject/build/CMakeFiles/CMakeOutput.log".
+See also "C:/Users/thewi/Programming/ESP32/PeltierCooler/PeltierCoolerProject/build/CMakeFiles/CMakeError.log".

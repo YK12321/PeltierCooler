@@ -1,0 +1,10 @@
+CMake Error: The source directory "C:/Users/thewi/Programming/ESP32/PeltierCooler/PeltierCoolerProject/build/CMakeFiles/CMakeTmp" does not appear to contain CMakeLists.txt.
+Specify --help for usage, or press the help button on the CMake GUI.
+CMake Error at C:/Users/thewi/.espressif/tools/cmake/3.24.0/share/cmake-3.24/Modules/CMakeDetermineCompilerABI.cmake:57 (try_compile):
+  Failed to configure test project build system.
+Call Stack (most recent call first):
+  C:/Users/thewi/.espressif/tools/cmake/3.24.0/share/cmake-3.24/Modules/CMakeTestCCompiler.cmake:26 (CMAKE_DETERMINE_COMPILER_ABI)
+  C:/Users/thewi/esp/esp-idf/tools/cmake/project.cmake:342 (__project)
+  CMakeLists.txt:8 (project)
+
+
